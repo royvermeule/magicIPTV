@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4 (with Xdebug coverage)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: xdebug
+          ini-values: xdebug.mode=coverage
+          tools: composer:v2
+          extensions: mbstring, intl, dom, pdo, pdo_sqlite, sqlite3
+
+      - name: Install dependencies (cached)
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --no-interaction --prefer-dist
+
+      # Create the missing config file for CI
+      - name: Prepare local-config.php from dist
+        run: |
+          cp -f "$GITHUB_WORKSPACE/tests/config/settings.php" "$GITHUB_WORKSPACE/src/local-config.php"
+          ls -l "$GITHUB_WORKSPACE/src/local-config.php"
+
+      - name: PHPUnit
+        run: |
+          vendor/bin/phpunit
+
+      - name: Psalm (GitHub annotations)
+        run: vendor/bin/psalm --output-format=github

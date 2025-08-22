@@ -1,0 +1,24 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Src\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "symfony/http-foundation": "^7.3",
+    "doctrine/orm": "^3.5",
+    "twig/twig": "^3.21",
+    "doctrine/dbal": "^4.3",
+    "symfony/cache": "^7.3"
+  },
+  "require-dev": {
+    "vimeo/psalm": "^6.13",
+    "phpunit/phpunit": "^12.3",
+    "symfony/var-dumper": "^7.3"
+  }
+}
