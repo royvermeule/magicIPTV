@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Src\core;
 
 use Doctrine\ORM\EntityManager;
+use Respect\Validation\ChainedValidator;
+use Respect\Validation\Validator;
 
 final class Config
 {
@@ -30,13 +32,31 @@ final class Config
      * @throws \Exception
      * @throws \InvalidArgumentException
      */
-    public static function getFromLocalConfig(string $key): mixed
+    public static function getFromLocalConfig(string $key): string|int|bool|float
     {
         $localConfig = self::getLocalConfig();
         if (!array_key_exists($key, $localConfig)) {
             throw new \InvalidArgumentException("Key $key not found in local-config.php");
         }
         return $localConfig[$key];
+    }
+
+    /**
+     * @param string $name
+     * @return array
+     * @throws \Exception
+     */
+    public static function getValidator(string $name): array
+    {
+        $path = self::$appRoot . 'validators/' . $name . '.php';
+        if (!file_exists($path)) {
+            throw new \Exception('validator ' . $name . ' not found');
+        }
+
+        /** @var array<string, Validator> $chainedValidator */
+        $chainedValidator = require $path;
+
+        return $chainedValidator;
     }
 
     /**

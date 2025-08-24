@@ -1,0 +1,21 @@
+{% extends "base.twig" %}
+
+{% block title %} Registreren {% endblock %}
+
+{% block content %}
+    <main>
+        <div class="form-container">
+            <form class="auth-form"
+                  hx-post="/register"
+                  hx-target="#response"
+                  hx-swap="innerHTML">
+                <div id="response"></div>
+                <input type="email" name="email" placeholder="Email">
+                <input type="password" name="password" placeholder="Wachtwoord">
+                <input type="password" name="password_confirmation" placeholder="Wachtwoord">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit">Registreren</button>
+            </form>
+        </div>
+    </main>
+{% endblock %}

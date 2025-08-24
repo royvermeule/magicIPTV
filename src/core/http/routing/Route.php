@@ -5,22 +5,52 @@ declare(strict_types=1);
 namespace Src\core\http\routing;
 
 use Src\core\http\IController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 final class Route
 {
     /** @var array<string, string> */
     private(set) array $params = [];
+
+    /** @var bool */
+    private readonly bool $needsRequest;
+
     /**
      * @param string $method
      * @param string $name
      * @param array{0: class-string<IController>, 1: string}|callable(mixed...): Response $handler
+     * @throws \ReflectionException
      */
     public function __construct(
         public readonly string $method,
         public readonly string $name,
         private readonly mixed $handler
     ) {
+        $this->needsRequest = $this->detectNeedsRequest($handler);
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
+    private function detectNeedsRequest(mixed $handler): bool
+    {
+        if (is_array($handler)) {
+            /** @var array{0: class-string<IController>, 1: string} $handler */
+            $ref = new \ReflectionMethod($handler[0], $handler[1]);
+        } else {
+            /** @var \Closure|callable-string $handler */
+            $ref = new \ReflectionFunction($handler);
+        }
+
+        foreach ($ref->getParameters() as $param) {
+            $type = $param->getType();
+            if ($type instanceof \ReflectionNamedType && $type->getName() === Request::class) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function match(string $method, string $uri): bool
@@ -34,11 +64,12 @@ final class Route
         }
 
         $nameParts = explode('/', $this->name);
-        $uriParts = explode('/', $uri);
+        $uriParts  = explode('/', $uri);
 
         if (count($nameParts) !== count($uriParts)) {
             return false;
         }
+
         $pattern = '/\{([^}]*)\}/';
         $matches = [];
 
@@ -79,7 +110,13 @@ final class Route
         /** @psalm-var callable(mixed...): Response $handler */
         $callable = $handler;
 
-        $response = call_user_func_array($callable, $this->params);
+        $params = $this->params;
+
+        if ($this->needsRequest) {
+            $params['request'] = Request::createFromGlobals();
+        }
+
+        $response = call_user_func_array($callable, $params);
 
         if (!($response instanceof Response)) {
             throw new \RuntimeException('The route handler must return a Response object');

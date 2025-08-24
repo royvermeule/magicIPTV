@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Src\core\http;
 
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
+use Src\core\Config;
+use Src\core\Session;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment;
@@ -14,11 +18,14 @@ use Twig\Loader\FilesystemLoader;
 
 trait IsController
 {
-    private readonly Request $request;
+    private EntityManagerInterface $entityManager;
 
+    /**
+     * @throws \Exception
+     */
     public function __construct()
     {
-        $this->request = Request::createFromGlobals();
+        $this->entityManager = Config::getEntityManager();
     }
 
     private function json(
@@ -49,6 +56,11 @@ trait IsController
     {
         $loader = new FilesystemLoader(__DIR__ . '/../../views/');
         $twig = new Environment($loader);
+
+        $standardParams = [
+            'csrf_token' => Session::get('csrf_token')
+        ];
+        $params = array_merge($standardParams, $params);
 
         try {
             $content = $twig->render($file . '.twig', $params);

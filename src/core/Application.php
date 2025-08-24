@@ -24,6 +24,8 @@ final class Application
 
     public function run(): void
     {
+        Session::start();
+
         $this->requireRoutes();
         $response = Router::run();
         $response->send();

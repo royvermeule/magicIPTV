@@ -2,6 +2,8 @@
 
 {% block title %} Home {% endblock %}
 
-{% block content %}
-    <h1>{{ message|escape('html') }}</h1>
-{% endblock %}
+<body hx-boost="true">
+    {% block content %}
+
+    {% endblock %}
+</body>

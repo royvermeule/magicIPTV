@@ -15,6 +15,11 @@ final class Router
     private static ?\WeakMap $middleware = null;
 
     /**
+     * @var array<string, list<class-string<IMiddleware>|callable(Request, array): Response>>
+     */
+    private static array $pendingMiddleware = [];
+
+    /**
      * @param string $method
      * @param string $name
      * @param array{0: class-string<IController>, 1: string}|callable(mixed...): Response $handler
@@ -24,6 +29,15 @@ final class Router
     {
         $route = new Route($method, $name, $handler);
         self::$routes[] = $route;
+
+        // attach pending middleware if registered earlier
+        $key = $method . ':' . $name;
+        if (isset(self::$pendingMiddleware[$key])) {
+            foreach (self::$pendingMiddleware[$key] as $mw) {
+                self::attachMiddleware($route, $mw);
+            }
+            unset(self::$pendingMiddleware[$key]);
+        }
     }
 
     /**
@@ -78,22 +92,20 @@ final class Router
 
     /**
      * @param class-string<IMiddleware>|callable(Request, array): Response $middleware
+     * @param string|null $method
      * @return void
      */
-    public static function addMiddlewareToAllRoutes(string|callable $middleware): void
+    public static function addMiddlewareToAllRoutes(string|callable $middleware, ?string $method = null): void
     {
         foreach (self::$routes as $route) {
-            if (self::$middleware === null) {
-                /** @var \WeakMap<Route, list<class-string<IMiddleware>|(callable(Request, array): Response)>> $map */
-                $map = new \WeakMap();
-                self::$middleware = $map;
+            if ($method !== null && $route->method !== $method) {
+                continue;
             }
-            $map = self::$middleware;
-
-            /** @var list<class-string<IMiddleware>|(callable(Request, array): Response)> $list */
-            $list = $map[$route] ?? [];
-            $list[] = $middleware;
-            $map[$route] = $list;
+            self::attachMiddleware($route, $middleware);
+        }
+        // also keep it for future routes
+        foreach (['GET','POST','DELETE','PUT','OPTIONS'] as $method) {
+            self::$pendingMiddleware[$method . ':*'][] = $middleware;
         }
     }
 
@@ -102,7 +114,6 @@ final class Router
      * @param string $name
      * @param class-string<IMiddleware>|callable(Request, array): Response $middleware
      * @return void
-     * @throws \Exception
      */
     public static function addMiddleware(string $method, string $name, string|callable $middleware): void
     {
@@ -111,10 +122,22 @@ final class Router
             return $route->method === $method && $route->name === $name;
         });
 
-        if ($route === null) {
-            throw new \Exception('Route not found for middleware');
+        if ($route !== null) {
+            self::attachMiddleware($route, $middleware);
+            return;
         }
 
+        // defer if route not yet registered
+        $key = $method . ':' . $name;
+        self::$pendingMiddleware[$key][] = $middleware;
+    }
+
+    /**
+     * @param Route $route
+     * @param class-string<IMiddleware>|callable(Request, array): Response $middleware
+     */
+    private static function attachMiddleware(Route $route, string|callable $middleware): void
+    {
         if (self::$middleware === null) {
             /** @var \WeakMap<Route, list<class-string<IMiddleware>|(callable(Request, array): Response)>> $map */
             $map = new \WeakMap();
@@ -131,11 +154,7 @@ final class Router
     private static function runMiddleware(Request $request, Route $route): ?Response
     {
         $map = self::$middleware;
-        if ($map === null) {
-            return null;
-        }
-
-        if (!$map->offsetExists($route)) {
+        if ($map === null || !$map->offsetExists($route)) {
             return null;
         }
 

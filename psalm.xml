@@ -1,24 +1,37 @@
-<?xml version="1.0"?>
 <psalm
-    errorLevel="1"
-    resolveFromConfigFile="true"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns="https://getpsalm.org/schema/config"
-    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
-    findUnusedBaselineEntry="true"
-    findUnusedCode="true"
+        errorLevel="1"
+        resolveFromConfigFile="true"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="https://getpsalm.org/schema/config"
+        xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+        findUnusedBaselineEntry="true"
+        findUnusedCode="true"
 >
     <projectFiles>
-        <directory name="src" />
+        <directory name="src"/>
         <ignoreFiles>
-            <directory name="vendor" />
+            <directory name="vendor"/>
         </ignoreFiles>
     </projectFiles>
+
     <issueHandlers>
-        <UnusedClass errorLevel="suppress" />
-        <UnusedMethod errorLevel="suppress" />
-        <UnusedProperty errorLevel="suppress" />
-        <UnusedFunctionCall errorLevel="suppress" />
-        <UnusedPsalmSuppress errorLevel="suppress" />
+        <UnusedClass errorLevel="suppress"/>
+        <UnusedMethod errorLevel="suppress"/>
+        <UnusedProperty errorLevel="suppress"/>
+        <UnusedFunctionCall errorLevel="suppress"/>
+        <UnusedPsalmSuppress errorLevel="suppress"/>
+        <PropertyNotSetInConstructor errorLevel="suppress"/>
     </issueHandlers>
+
+    <issueHandlers>
+        <ClassMustBeFinal>
+            <errorLevel type="suppress">
+                <directory name="src/entities" />
+            </errorLevel>
+        </ClassMustBeFinal>
+    </issueHandlers>
+
+    <plugins>
+        <pluginClass class="Weirdan\DoctrinePsalmPlugin\Plugin"/>
+    </plugins>
 </psalm>

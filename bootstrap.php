@@ -38,24 +38,6 @@ $params = [
     'charset'  => $config['DB_CHARSET'] ?? '',
 ];
 
-if ($config['TEST_MODE'] === true) {
-    $params = [
-        'driver' => $config['DB_DRIVER'],
-        'path'   => $config['DB_FILE'],
-    ];
-}
-
-if ($config['DB_DRIVER'] === 'pdo_sqlite' && $config['TEST_MODE'] === false) {
-    if (empty($config['DB_FILE'])) {
-        die('DB_FILE is not set for sqlite driver');
-    }
-
-    $params = [
-        'driver' => 'pdo_sqlite',
-        'path'   => $config['DB_FILE'],
-    ];
-}
-
 $connection = DriverManager::getConnection($params, $ormConfig);
 
 return new EntityManager($connection, $ormConfig);
