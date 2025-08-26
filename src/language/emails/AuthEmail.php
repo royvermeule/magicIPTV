@@ -17,11 +17,11 @@ enum AuthEmail
      * @return string
      * @throws \Exception
      */
-    public function translate(?L $lang = null, array $data = []): string
+    public function translate(?L $lang = null, ?array $data = null): string
     {
         $lang ??= L::current();
 
-        if ($data !== []) {
+        if ($data !== null) {
             $this->validateData($data);
         }
 

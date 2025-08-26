@@ -1,7 +1,9 @@
-{% extends base.twig %}
+{% extends "base.twig" %}
 
 {% block title %} {{ title }} {% endblock %}
+
+{% block content %}
     <main>
-        <div class="auth-message">{{ message }}</div>
+        <div class="auth-message">{{ message|raw }}</div>
     </main>
 {% endblock %}

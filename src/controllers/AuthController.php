@@ -2,7 +2,6 @@
 
 namespace Src\controllers;
 
-use Couchbase\Role;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -46,6 +45,11 @@ final class AuthController implements IController
         if (!$user) {
             return new Response(
                 content: AuthError::UserNotFound->translate()
+            );
+        }
+        if ($user->isVerified() === false) {
+            return new Response(
+                content: AuthError::UserNotVerified->translate()
             );
         }
 
@@ -100,10 +104,12 @@ final class AuthController implements IController
             throw new \Exception('Role not found');
         }
 
+        $language = Session::get('language') ?? 'en';
         $user = new User(
             email: $email,
             password: $password,
-            role: $role
+            role: $role,
+            language: (string) $language
         );
         $this->entityManager->persist($user);
         $this->entityManager->flush();
@@ -119,6 +125,7 @@ final class AuthController implements IController
     /**
      * @throws RandomException
      * @throws ORMException
+     * @throws \DateMalformedStringException
      */
     private function createRegistrationToken(User $user): RegistrationTokens
     {
@@ -127,17 +134,16 @@ final class AuthController implements IController
             RegistrationTokens::class
         );
         $registrationToken = $registrationTokenRepo->findByUser($user);
-        if (
-            $registrationToken !== null &&
-            $registrationToken->getCreatedAt()->getTimestamp() < time() - 60
-        ) {
-            return $registrationToken;
-        }
 
-        if (
-            $registrationToken !== null &&
-            $registrationToken->getCreatedAt()->getTimestamp() > time() - 60
-        ) {
+        if ($registrationToken !== null) {
+            $expiresAt = (clone $registrationToken->getCreatedAt()
+                ->modify('+60 minutes'));
+            $currentTime = new \DateTime();
+
+            if ($expiresAt < $currentTime) {
+                return $registrationToken;
+            }
+
             $this->entityManager->remove($registrationToken);
             $this->entityManager->flush();
         }
@@ -170,13 +176,10 @@ final class AuthController implements IController
         $token = $registrationToken->getToken();
         $baseUrl = (string) Config::getFromLocalConfig('BASE_URL');
 
-        $data = ['link' => "$baseUrl/verify-account/$token"];
-        $mail->Subject = AuthEmail::VerificationEmailSubject->translate(
-            data: $data
-        );
+        $mail->Subject = AuthEmail::VerificationEmailSubject->translate();
         $mail->isHTML(true);
         $mail->Body = AuthEmail::VerificationEmailBody->translate(
-            data: $data
+            data: ['link' => "$baseUrl/verify-account/$token"]
         );
         $mail->send();
     }
@@ -205,8 +208,15 @@ final class AuthController implements IController
         $this->entityManager->flush();
 
         return $this->view('/auth/message', [
-            'title' => 'Account geverifieerd',
-            'message' => 'Account verificatie gelukt! Ge naar <a href="/login">Login</a>'
+            'title' => 'Verify',
+            'message' => AuthMessage::registrationCompleted->translate()
         ]);
+    }
+
+    public function logout(): Response
+    {
+        Session::unset('user_id');
+
+        return new RedirectResponse('/login');
     }
 }

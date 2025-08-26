@@ -10,14 +10,23 @@
                   hx-target="#response"
                   hx-swap="innerHTML">
                 <div id="response"></div>
-                <input type="email" name="email" placeholder="Email">
-                <input type="password" name="password" placeholder="Wachtwoord">
+                <input type="email" name="email" placeholder="{{
+                    fromLang(
+                        constant('Src\\language\\forms\\inputs\\AuthInput::Email')
+                    )
+                }}">
+                <input type="password" name="password" placeholder="{{
+                fromLang(
+                    constant('Src\\language\\forms\\inputs\\AuthInput::Password')
+                )
+                }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 <input type="hidden" name="referer" value="{{ referer }}">
                 <button type="submit">Login</button>
                 <div class="links">
-                    Nog geen account? Maak een account aan.
-                    <a href="/register">Registreren</a>
+                    {{ fromLang(
+                        constant('Src\\language\\messages\\AuthMessage::NoAccountYet')
+                    ) | raw }}
                 </div>
             </form>
         </div>

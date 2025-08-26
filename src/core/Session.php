@@ -67,4 +67,9 @@ final class Session
     {
         return isset($_SESSION[$key]);
     }
+
+    public static function unset(string $key): void
+    {
+        unset($_SESSION[$key]);
+    }
 }

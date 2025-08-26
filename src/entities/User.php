@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\entities;
 
-use Couchbase\Role;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -52,6 +51,7 @@ class User
         $this->email = $email;
         $this->password = password_hash($password, PASSWORD_DEFAULT);
         $this->role = $role;
+        $this->language = $language;
         $this->created_at = new \DateTime();
         $this->profiles = new ArrayCollection();
     }
@@ -119,5 +119,15 @@ class User
     public function getProfiles(): Collection
     {
         return $this->profiles;
+    }
+
+    public function getLanguage(): string
+    {
+        return $this->language;
+    }
+
+    public function setLanguage(string $language): void
+    {
+        $this->language = $language;
     }
 }

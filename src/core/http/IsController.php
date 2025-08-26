@@ -8,13 +8,17 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Src\core\Config;
 use Src\core\Session;
+use Src\language\errors\AuthError;
+use Src\language\Language;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
+use Twig\Extension\EscaperExtension;
 use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
 trait IsController
 {
@@ -56,6 +60,16 @@ trait IsController
     {
         $loader = new FilesystemLoader(__DIR__ . '/../../views/');
         $twig = new Environment($loader);
+        $twig->addFunction(new TwigFunction('fromLang', function (
+            \UnitEnum $enumCase,
+            ?Language $lang = null,
+            ?array $data = null
+        ) {
+            if (!method_exists($enumCase, 'translate')) {
+                throw new \Exception('Language translate enum does not contain method "translate"');
+            }
+            return $enumCase->translate($lang, $data);
+        }));
 
         $standardParams = [
             'csrf_token' => Session::get('csrf_token')

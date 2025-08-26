@@ -10,10 +10,18 @@ enum AuthMessage
 {
     case verificationLinkSend;
     case registrationCompleted;
+    case NoAccountYet;
 
-    public function translate(?L $lang = null): string
+    /**
+     * @throws \Exception
+     */
+    public function translate(?L $lang = null, ?array $data = null): string
     {
         $lang ??= L::current();
+
+        if ($data !== null) {
+            $this->validateData($data);
+        }
 
         return match ($this) {
             self::verificationLinkSend => match ($lang) {
@@ -29,7 +37,22 @@ enum AuthMessage
                 L::DE => "Sie haben Ihr Konto erfolgreich registriert. Gehen Sie bitte zu <a href='/login'>Anmelden</a>",
                 L::ES => "Has registrado tu cuenta exitosamente, por favor ve a <a href='/login'>login</a>",
                 L::FR => "Vous avez enregistré votre compte avec succès, veuillez vous rendre sur <a href='/login'>login</a>",
-            }
+            },
+            self::NoAccountYet => match ($lang) {
+                L::NL => "<p>Nog geen account? Maak een account aan.</p> <a href='/register' hx-target='body'>Registreren</a>",
+                L::EN => "<p>Don't have an account yet? Create it here.</p> <a href='/register' hx-target='body'>Register</a>",
+                L::DE => "<p>Kein Konto? Erstellen Sie ein Konto.</p> <a href='/register' hx-target='body'>Registrieren</a>",
+                L::ES => "<p>¿Tenías una cuenta? Crea una cuenta.</p> <a href='/register' hx-target='body'>Registrarse</a>",
+                L::FR => "<p>Pas de compte ? Créez un compte.</p> <a href='/register' hx-target='body'>S'inscrire</a>",
+            },
         };
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function validateData(array $data): void
+    {
+        return;
     }
 }

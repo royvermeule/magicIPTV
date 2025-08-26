@@ -19,7 +19,15 @@ final class UserRepository extends EntityRepository
 
     public function authenticate(string $email, string $password): ?User
     {
-        return $this->findOneBy(['email' => $email, 'password' => $password]);
+        $user = $this->findByEmail($email);
+        if ($user === null) {
+            return null;
+        }
+        if ($user->checkPassword($password) === false) {
+            return null;
+        }
+
+        return $user;
     }
 
     /**
