@@ -6,6 +6,7 @@ namespace Src\core\http;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
+use eftec\bladeone\BladeOne;
 use Src\core\Config;
 use Src\core\Session;
 use Src\language\errors\AuthError;
@@ -53,23 +54,17 @@ trait IsController
      * @param array<string, scalar> $params
      * @param array<string, string> $headers
      * @return Response
-     * @throws RuntimeError
-     * @throws SyntaxError
      */
+
     private function view(string $file, array $params = [], array $headers = []): Response
     {
-        $loader = new FilesystemLoader(__DIR__ . '/../../views/');
-        $twig = new Environment($loader);
-        $twig->addFunction(new TwigFunction('fromLang', function (
-            \UnitEnum $enumCase,
-            ?Language $lang = null,
-            ?array $data = null
-        ) {
-            if (!method_exists($enumCase, 'translate')) {
-                throw new \Exception('Language translate enum does not contain method "translate"');
-            }
-            return $enumCase->translate($lang, $data);
-        }));
+        $views = __DIR__ . '/../../views';
+        $cache = __DIR__ . '/../../cache';
+        if (!is_dir($cache)) {
+            mkdir($cache, 0775, true);
+        }
+
+        $blade = new BladeOne($views, $cache, BladeOne::MODE_AUTO);
 
         $standardParams = [
             'csrf_token' => Session::get('csrf_token')
@@ -77,13 +72,22 @@ trait IsController
         $params = array_merge($standardParams, $params);
 
         try {
-            $content = $twig->render($file . '.twig', $params);
-        } catch (LoaderError $e) {
+            $content = $blade->run($file, $params);
+
+        } catch (\Exception $e) {
             return new Response(
                 content: $e->getMessage(),
                 status: 404,
             );
         }
+
         return new Response($content, 200, $headers);
+    }
+
+    private function hxRedirect(string $url): Response
+    {
+        return new Response(
+            headers: ['HX-Redirect' => $url],
+        );
     }
 }

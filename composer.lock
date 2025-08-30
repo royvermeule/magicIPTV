@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e1eba899e38e6dff3eca1ce2ee1adaf5",
+    "content-hash": "b1ca75d9c49407956d49f3883783764a",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -758,6 +758,65 @@
                 }
             ],
             "time": "2024-11-01T21:49:07+00:00"
+        },
+        {
+            "name": "eftec/bladeone",
+            "version": "4.19",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/EFTEC/BladeOne.git",
+                "reference": "3332fab956de4192ad28053f5d3849d983f5b568"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/EFTEC/BladeOne/zipball/3332fab956de4192ad28053f5d3849d983f5b568",
+                "reference": "3332fab956de4192ad28053f5d3849d983f5b568",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8.5.23"
+            },
+            "suggest": {
+                "eftec/bladeonehtml": "Extension to create forms",
+                "ext-mbstring": "This extension is used if it's active"
+            },
+            "bin": [
+                "lib/bladeonecli"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "eftec\\bladeone\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jorge Patricio Castro Castillo",
+                    "email": "jcastro@eftec.cl"
+                }
+            ],
+            "description": "The standalone version Blade Template Engine from Laravel in a single php file",
+            "homepage": "https://github.com/EFTEC/BladeOne",
+            "keywords": [
+                "blade",
+                "php",
+                "template",
+                "templating",
+                "view"
+            ],
+            "support": {
+                "issues": "https://github.com/EFTEC/BladeOne/issues",
+                "source": "https://github.com/EFTEC/BladeOne/tree/4.19"
+            },
+            "time": "2025-07-29T12:17:30+00:00"
         },
         {
             "name": "graham-campbell/result-type",

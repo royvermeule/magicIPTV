@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\controllers;
 
+use DateMalformedStringException;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use PHPMailer\PHPMailer\PHPMailer;
 use Random\RandomException;
+use Respect\Validation\Exceptions\NestedValidationException;
 use Respect\Validation\Validator;
 use Src\core\Config;
 use Src\core\http\IController;
@@ -23,8 +27,6 @@ use Src\repositories\UserRepository;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Twig\Error\RuntimeError;
-use Twig\Error\SyntaxError;
 
 final class AuthController implements IController
 {
@@ -55,13 +57,15 @@ final class AuthController implements IController
 
         Session::set('user_id', (int) $user->getId());
 
-        $referer = (string) $request->request->get('referer');
-        return new RedirectResponse($referer);
+        return $this->hxRedirect('/home');
     }
 
     /**
-     * @throws \Exception
+     * @throws DateMalformedStringException
+     * @throws OptimisticLockException
+     * @throws RandomException
      * @throws ORMException
+     * @throws \Exception
      */
     public function register(Request $request): Response
     {
@@ -72,29 +76,52 @@ final class AuthController implements IController
         /** @var array<string, Validator> $userValidator */
         $userValidator = Config::getValidator('user-validator');
 
-        if (!$userValidator['email']->isValid($email)) {
-            return new Response(
-                content: AuthError::InvalidEmail->translate()
-            );
+        try {
+            $userValidator['email']->assert($email);
+        } catch (NestedValidationException $e) {
+            $messages = $e->getMessages();
+            if (isset($messages['notEmpty'])) {
+                return new Response(content: AuthError::EmailEmpty->translate());
+            }
+            if (isset($messages['email'])) {
+                return new Response(content: AuthError::EmailNotValidFormat->translate());
+            }
+            return new Response(content: AuthError::InvalidEmail->translate());
         }
-        if (!$userValidator['password']->isValid($password)) {
-            return new Response(
-                content: AuthError::InvalidPassword->translate()
-            );
+
+        try {
+            $userValidator['password']->assert($password);
+        } catch (NestedValidationException $e) {
+            $messages = $e->getMessages();
+
+            if (isset($messages['notEmpty'])) {
+                return new Response(content: AuthError::PasswordEmpty->translate());
+            }
+
+            if (isset($messages['length'])) {
+                if (strlen($password) < 8) {
+                    return new Response(content: AuthError::PasswordTooShort->translate());
+                }
+                if (strlen($password) > 64) {
+                    return new Response(content: AuthError::PasswordTooLong->translate());
+                }
+            }
+
+            if (isset($messages['regex'])) {
+                return new Response(content: AuthError::PasswordTooWeak->translate());
+            }
+
+            return new Response(content: AuthError::InvalidPassword->translate());
         }
+
         if ($password !== $passwordConfirmation) {
-            echo $password . "\n" . $passwordConfirmation;
-            return new Response(
-                content: AuthError::PasswordDoNotMatch->translate()
-            );
+            return new Response(content: AuthError::PasswordDoNotMatch->translate());
         }
 
         /** @var UserRepository $userRepo */
         $userRepo = $this->entityManager->getRepository(User::class);
         if ($userRepo->findByEmail($email) !== null) {
-            return new Response(
-                content: AuthError::UserAlreadyExists->translate()
-            );
+            return new Response(content: AuthError::UserAlreadyExists->translate());
         }
 
         /** @var RoleRepository $roleRepo */
@@ -125,7 +152,7 @@ final class AuthController implements IController
     /**
      * @throws RandomException
      * @throws ORMException
-     * @throws \DateMalformedStringException
+     * @throws DateMalformedStringException
      */
     private function createRegistrationToken(User $user): RegistrationTokens
     {
@@ -177,7 +204,7 @@ final class AuthController implements IController
         $baseUrl = (string) Config::getFromLocalConfig('BASE_URL');
 
         $mail->Subject = AuthEmail::VerificationEmailSubject->translate();
-        $mail->isHTML(true);
+        $mail->isHTML();
         $mail->Body = AuthEmail::VerificationEmailBody->translate(
             data: ['link' => "$baseUrl/verify-account/$token"]
         );
@@ -187,8 +214,7 @@ final class AuthController implements IController
     /**
      * @throws OptimisticLockException
      * @throws ORMException
-     * @throws RuntimeError
-     * @throws SyntaxError
+     * @throws \Exception
      */
     public function verifyAccount(string $token): Response
     {
@@ -207,7 +233,7 @@ final class AuthController implements IController
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        return $this->view('/auth/message', [
+        return $this->view('auth.message', [
             'title' => 'Verify',
             'message' => AuthMessage::registrationCompleted->translate()
         ]);

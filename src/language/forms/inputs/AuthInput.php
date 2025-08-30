@@ -15,13 +15,9 @@ enum AuthInput
     /**
      * @throws \Exception
      */
-    public function translate(?L $lang = null, ?array $data = null): string
+    public function translate(?L $lang = null): string
     {
         $lang ??= L::current();
-
-        if ($data !== null) {
-            $this->validateData($data);
-        }
 
         return match ($this) {
             self::Email => match ($lang) {
@@ -42,10 +38,5 @@ enum AuthInput
                 L::FR => "Confirmez le mot de passe",
             }
         };
-    }
-
-    private function validateData(array $data): void
-    {
-        return;
     }
 }

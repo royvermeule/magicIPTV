@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\controllers;
 
 use Src\core\http\IController;
@@ -17,6 +19,7 @@ final class Controller implements IController
     /**
      * @throws SyntaxError
      * @throws RuntimeError
+     * @throws \Exception
      */
     public function index(): Response
     {
@@ -26,6 +29,7 @@ final class Controller implements IController
     /**
      * @throws SyntaxError
      * @throws RuntimeError
+     * @throws \Exception
      */
     public function home(): Response
     {
@@ -33,8 +37,7 @@ final class Controller implements IController
     }
 
     /**
-     * @throws SyntaxError
-     * @throws RuntimeError
+     * @throws \Exception
      */
     public function login(Request $request): Response
     {
@@ -48,15 +51,11 @@ final class Controller implements IController
             'referer' => $referer,
         ];
 
-        return $this->view('auth/login', $params);
+        return $this->view('auth.login', $params);
     }
 
-    /**
-     * @throws RuntimeError
-     * @throws SyntaxError
-     */
     public function register(): Response
     {
-        return $this->view('auth/register');
+        return $this->view('auth.register');
     }
 }

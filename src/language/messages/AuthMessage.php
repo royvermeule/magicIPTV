@@ -15,13 +15,9 @@ enum AuthMessage
     /**
      * @throws \Exception
      */
-    public function translate(?L $lang = null, ?array $data = null): string
+    public function translate(?L $lang = null): string
     {
         $lang ??= L::current();
-
-        if ($data !== null) {
-            $this->validateData($data);
-        }
 
         return match ($this) {
             self::verificationLinkSend => match ($lang) {
@@ -46,13 +42,5 @@ enum AuthMessage
                 L::FR => "<p>Pas de compte ? Créez un compte.</p> <a href='/register' hx-target='body'>S'inscrire</a>",
             },
         };
-    }
-
-    /**
-     * @throws \Exception
-     */
-    private function validateData(array $data): void
-    {
-        return;
     }
 }

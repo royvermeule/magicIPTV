@@ -7,8 +7,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:80"
-    volumes:
-      - .:/var/www/html
     environment:
       TZ: ${TZ}
       DB_DRIVER: ${DB_DRIVER}
@@ -17,7 +15,12 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
-
+    command: >
+      sh -c "chown -R www-data:www-data /var/www/html/var /var/www/html/src/core/http/../../cache &&
+             chmod -R 775 /var/www/html/var /var/www/html/src/core/http/../../cache &&
+             apache2-foreground"
+    volumes:
+        - .:/var/www/html
   db:
     image: mysql:8.0
     restart: always
@@ -30,7 +33,6 @@ services:
       MYSQL_PASSWORD: ${DB_PASS}
     volumes:
       - db_data:/var/lib/mysql
-
 
 volumes:
   db_data:

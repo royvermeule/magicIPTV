@@ -26,7 +26,7 @@ Router::get('/verify-account/{token}', [AuthController::class, 'verifyAccount'])
 Router::get('/logout', [AuthController::class, 'logout']);
 
 Router::addMiddlewareToAllRoutes(function (Request $request) {
-    $csrfToken = $request->headers->get('csrf_token');
+    $csrfToken = $request->get('csrf_token');
     if (
         $csrfToken === null ||
         $csrfToken !== Session::get('csrf_token')

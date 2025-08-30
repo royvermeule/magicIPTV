@@ -1,0 +1,13 @@
+<?php $_shouldextend[1]=1; ?>
+
+<?php $this->startSection('title', 'Message'); ?>
+
+<?php $this->startSection('content'); ?>
+ <div class="container">
+ <div class="auth-message">
+ <p><?php echo $message; ?></p>
+ </div>
+ </div>
+<?php $this->stopSection(); ?>
+
+<?php if (isset($_shouldextend[1])) { echo $this->runChild('base'); } ?>
