@@ -7,6 +7,7 @@ namespace Src\controllers;
 use DateMalformedStringException;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
+use OTPHP\TOTP;
 use PHPMailer\PHPMailer\PHPMailer;
 use Random\RandomException;
 use Respect\Validation\Exceptions\NestedValidationException;
@@ -15,12 +16,14 @@ use Src\core\Config;
 use Src\core\http\IController;
 use Src\core\http\IsController;
 use Src\core\Session;
+use Src\entities\AuthTokens;
 use Src\entities\RegistrationTokens;
 use Src\entities\Roles;
 use Src\entities\User;
 use Src\language\emails\AuthEmail;
 use Src\language\errors\AuthError;
 use Src\language\messages\AuthMessage;
+use Src\repositories\AuthTokenRepository;
 use Src\repositories\RegistrationTokenRepository;
 use Src\repositories\RoleRepository;
 use Src\repositories\UserRepository;
@@ -69,7 +72,7 @@ final class AuthController implements IController
      */
     public function register(Request $request): Response
     {
-        $email = (string) $request->request->get('email');
+        $email = strtolower((string) $request->request->get('email'));
         $password = (string) $request->request->get('password');
         $passwordConfirmation = (string) $request->request->get('password_confirmation');
 
@@ -187,28 +190,16 @@ final class AuthController implements IController
      */
     private function sendVerificationEmail(RegistrationTokens $registrationToken, string $email): void
     {
-        $mail = new PHPMailer();
-
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'roywilliamvermeulen@gmail.com';
-        $mail->Password = (string) Config::getFromLocalConfig('GMAIL_APP_PASSWORD');
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-
-        $mail->setFrom('roywilliamvermeulen@gmail.com', 'Roy Vermeulen');
-        $mail->addAddress($email);
-
         $token = $registrationToken->getToken();
         $baseUrl = (string) Config::getFromLocalConfig('BASE_URL');
 
-        $mail->Subject = AuthEmail::VerificationEmailSubject->translate();
-        $mail->isHTML();
-        $mail->Body = AuthEmail::VerificationEmailBody->translate(
+        $this->mail->addAddress($email);
+        $this->mail->Subject = AuthEmail::VerificationEmailSubject->translate();
+        $this->mail->isHTML();
+        $this->mail->Body = AuthEmail::VerificationEmailBody->translate(
             data: ['link' => "$baseUrl/verify-account/$token"]
         );
-        $mail->send();
+        $this->mail->send();
     }
 
     /**
@@ -245,4 +236,105 @@ final class AuthController implements IController
 
         return new RedirectResponse('/login');
     }
+
+    public function forgotPassword(Request $request): Response
+    {
+        /** @var ?string $email */
+        $email = Session::get('forgot_pwd_email') ?? '';
+
+        $post = $request->isMethod('POST');
+        if ($post) {
+            $email = (string) $request->request->get('email');
+            Session::set('forgot_pwd_email', $email);
+            return $this->hxRedirect('/forgot-password');
+        }
+        Session::unset('forgot_pwd_email');
+        return $this->view('auth.forgot-password', ['email' => (string) $email]);
+    }
+
+    /**
+     * @throws OptimisticLockException
+     * @throws ORMException
+     * @throws \Exception
+     */
+    public function forgotPasswordSend(Request $request): Response
+    {
+        $email = (string) $request->request->get('email');
+        /** @var UserRepository $userRepo */
+        $userRepo = $this->entityManager->getRepository(User::class);
+        $user = $userRepo->findByEmail($email);
+        if ($user === null) {
+            return new Response(
+                content: AuthMessage::AuthenticationMailSend->translate()
+            );
+        }
+
+        $authToken = $this->generateAuthToken($user);
+        $this->sendAuthToken($authToken, $email);
+
+        return new Response(
+            content: AuthMessage::AuthenticationMailSend->translate()
+        );
+    }
+
+    /**
+     * @throws OptimisticLockException
+     * @throws ORMException
+     */
+    private function generateAuthToken(User $user): string
+    {
+        /** @var AuthTokenRepository $authTokenRepo */
+        $authTokenRepo = $this->entityManager->getRepository(AuthTokens::class);
+
+        /** @var ?User $authToken */
+        $authToken = $authTokenRepo->findByUser($user);
+        if ($authToken !== null) {
+            $this->entityManager->remove($authToken);
+            $this->entityManager->flush();
+        }
+
+        $totp = TOTP::create();
+
+        $authToken = new AuthTokens(
+            token: $totp->getSecret(),
+            user: $user,
+        );
+        $this->entityManager->persist($authToken);
+        $this->entityManager->flush();
+
+        return $totp->now();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function sendAuthToken(string $token, string $email): void
+    {
+        $this->mail->addAddress($email);
+        $this->mail->Subject = AuthEmail::AuthCodeEmailSubject->translate();
+        $this->mail->isHTML();
+        $this->mail->Body = AuthEmail::AuthCodeEmailBody->translate(
+            data: ['auth_code' => $token]
+        );
+        $this->mail->send();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function verifyAuthToken(string $publicToken, User $user): bool
+    {
+        /** @var AuthTokenRepository $authTokenRepo */
+        $authTokenRepo = $this->entityManager->getRepository(AuthTokens::class);
+        $token = $authTokenRepo->findByUser($user);
+        if ($token === null) {
+            return false;
+        }
+        $secret = $token->getToken();
+        $totp = TOTP::create($secret);
+
+        return $totp->verify($publicToken);
+    }
+
+
 }

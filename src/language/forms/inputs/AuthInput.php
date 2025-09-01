@@ -11,6 +11,7 @@ enum AuthInput
     case Email;
     case Password;
     case PasswordConfirm;
+    case AuthCode;
 
     /**
      * @throws \Exception
@@ -36,6 +37,13 @@ enum AuthInput
                 L::DE => "Passwort bestätigen",
                 L::ES => "Confirmar Contraseña",
                 L::FR => "Confirmez le mot de passe",
+            },
+            AuthCode => match ($lang) {
+                L::NL => "Authenticatiecode",
+                L::EN => "Authentication code",
+                L::DE => "Authentifizierungscode",
+                L::ES => "Código de autenticación",
+                L::FR => "Code d'authentification",
             }
         };
     }

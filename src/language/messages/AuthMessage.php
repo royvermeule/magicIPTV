@@ -11,6 +11,7 @@ enum AuthMessage
     case verificationLinkSend;
     case registrationCompleted;
     case NoAccountYet;
+    case AuthenticationMailSend;
 
     /**
      * @throws \Exception
@@ -41,6 +42,13 @@ enum AuthMessage
                 L::ES => "<p>¿Tenías una cuenta? Crea una cuenta.</p> <a href='/register' hx-target='body'>Registrarse</a>",
                 L::FR => "<p>Pas de compte ? Créez un compte.</p> <a href='/register' hx-target='body'>S'inscrire</a>",
             },
+            self::AuthenticationMailSend => match ($lang) {
+                L::NL => "Check je E-mail voor de code, deze is 60 minuten geldig.",
+                L::EN => "Check your email for the code, it is valid for 60 minutes.",
+                L::DE => "Überprüfen Sie Ihre E-Mail auf den Code, dieser ist 60 Minuten gültig.",
+                L::ES => "Revisa tu correo electrónico para el código, es válido por 60 minutos.",
+                L::FR => "Vérifiez votre e-mail pour le code, il est valable pendant 60 minutes.",
+            }
         };
     }
 }
