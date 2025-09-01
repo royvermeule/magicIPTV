@@ -10,6 +10,7 @@ enum AuthButton
 {
     case LoginButton;
     case RegisterButton;
+    case ForgetPasswordButton;
 
     /**
      * @throws \Exception
@@ -31,6 +32,13 @@ enum AuthButton
                 L::DE => 'Registrieren',
                 L::ES => 'Registrarse',
                 L::FR => "S'inscrire",
+            },
+            self::ForgetPasswordButton => match ($lang) {
+                L::NL => 'Wachtwoord vergeten',
+                L::EN => 'Forgot password',
+                L::DE => 'Passwort vergessen',
+                L::ES => '¿Olvidaste tu contraseña?',
+                L::FR => 'Mot de passe oublié',
             },
         };
     }

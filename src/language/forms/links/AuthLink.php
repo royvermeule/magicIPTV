@@ -28,11 +28,39 @@ enum AuthLink
                 L::FR => "Vous n'avez pas encore de compte? <a hx-target='body' href='/register'>S'inscrire</a>",
             },
             self::ForgotPassword => match ($lang) {
-                L::NL => "Wachtwoord vergeten? <a hx-target='body' href='/forgot-password'>Herstel wachtwoord</a>",
-                L::EN => "Forgot your password? <a hx-target='body' href='/forgot-password'>Reset password</a>",
-                L::DE => "Passwort vergessen? <a hx-target='body' href='/forgot-password'>Passwort zurücksetzen</a>",
-                L::ES => "¿Olvidaste tu contraseña? <a hx-target='body' href='/forgot-password'>Restablecer contraseña</a>",
-                L::FR => "Mot de passe oublié ? <a hx-target='body' href='/forgot-password'>Réinitialiser le mot de passe</a>",
+                L::NL => "Wachtwoord vergeten? <a 
+                href='#'
+                hx-post='/forgot-password' 
+                hx-target='body' 
+                hx-vals='js:{ email: document.getElementById(\"email\").value }'>
+                Herstel wachtwoord</a>",
+                L::EN => "Forgot your password? <a
+                href='#'
+                hx-post='/forgot-password' 
+                hx-target='body' 
+                hx-vals='js:{ email: document.getElementById(\"email\").value }'>
+                Reset password</a>",
+                L::DE => "Passwort vergessen? <a 
+                href='#'
+                hx-swap='outerHTML'
+                hx-post='/forgot-password' 
+                hx-target='body' 
+                hx-vals='js:{ email: document.getElementById(\"email\").value }'>
+                Passwort zurücksetzen</a>",
+                L::ES => "¿Olvidaste tu contraseña? <a 
+                href='#'
+                hx-swap='outerHTML''
+                hx-post='/forgot-password' 
+                hx-target='body' 
+                hx-vals='js:{ email: document.getElementById(\"email\").value }'>
+                Restablecer contraseña</a>",
+                L::FR => "Mot de passe oublié ? <a 
+                href='#'
+                hx-swap='outerHTML'
+                hx-post='/forgot-password' 
+                hx-target='body' 
+                hx-vals='js:{ email: document.getElementById(\"email\").value }'>
+                Réinitialiser le mot de passe</a>",
             },
             self::Login => match ($lang) {
                 L::NL => "Heb je al een account? <a hx-target='body' href='/login'>Inloggen</a>",

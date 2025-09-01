@@ -6,6 +6,7 @@ namespace Src\controllers;
 
 use Src\core\http\IController;
 use Src\core\http\IsController;
+use Src\core\Session;
 use Src\entities\Roles;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,18 +18,14 @@ final class Controller implements IController
     use IsController;
 
     /**
-     * @throws SyntaxError
-     * @throws RuntimeError
      * @throws \Exception
      */
     public function index(): Response
     {
-        return $this->view('index');
+        return $this->view('home');
     }
 
     /**
-     * @throws SyntaxError
-     * @throws RuntimeError
      * @throws \Exception
      */
     public function home(): Response
@@ -41,17 +38,7 @@ final class Controller implements IController
      */
     public function login(Request $request): Response
     {
-        $referer = $request->headers->get('referer') ?? '/home';
-        $host = $request->getSchemeAndHttpHost();
-        if (!str_starts_with($referer, $host)) {
-            $referer = '/home';
-        }
-
-        $params = [
-            'referer' => $referer,
-        ];
-
-        return $this->view('auth.login', $params);
+        return $this->view('auth.login');
     }
 
     public function register(): Response

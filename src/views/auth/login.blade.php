@@ -9,7 +9,7 @@
             <div class="title">{{ AuthTitle::LoginTitle->translate() }}</div>
             <div id="response"></div>
             <div class="inputs">
-                <input type="email" name="email" placeholder="{{ AuthInput::Email->translate() }}">
+                <input id="email" value="" type="email" name="email" placeholder="{{ AuthInput::Email->translate() }}">
                 <input type="password" name="password" placeholder="{{ AuthInput::Password->translate() }}">
                 <input type="hidden" name="csrf_token" value="{{ Session::get('csrf_token') }}">
             </div>
