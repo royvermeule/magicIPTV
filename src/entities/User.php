@@ -42,6 +42,9 @@ class User
     #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'id', cascade: ['persist', 'remove'])]
     private Collection $profiles;
 
+    #[ORM\OneToOne(targetEntity: AuthTokens::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?AuthTokens $authToken = null;
+
     public function __construct(
         string $email,
         string $password,
@@ -129,5 +132,15 @@ class User
     public function setLanguage(string $language): void
     {
         $this->language = $language;
+    }
+
+    public function getAuthToken(): ?AuthTokens
+    {
+        return $this->authToken;
+    }
+
+    public function setAuthToken(?AuthTokens $authToken): void
+    {
+        $this->authToken = $authToken;
     }
 }

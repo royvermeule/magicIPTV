@@ -40,7 +40,7 @@ final class Session
 
     /**
      * @param string $key
-     * @param scalar $value
+     * @param scalar|array $value
      * @return void
      */
     public static function set(string $key, mixed $value): void
@@ -50,7 +50,7 @@ final class Session
 
     /**
      * @param string $key
-     * @return scalar|null
+     * @return scalar|array|null
      */
     public static function get(string $key): mixed
     {
@@ -58,7 +58,7 @@ final class Session
             return null;
         }
 
-        /** @var scalar $value */
+        /** @var scalar|array $value */
         $value = $_SESSION[$key];
         return $value;
     }

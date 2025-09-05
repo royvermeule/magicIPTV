@@ -9,6 +9,7 @@ use Src\core\http\routing\Router;
 use Src\core\Session;
 use Src\entities\RegistrationTokens;
 use Src\language\errors\AuthError;
+use Src\middleware\CheckForInAuth;
 use Src\repositories\RegistrationTokenRepository;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -73,3 +74,24 @@ Router::addMiddleware('GET', '/logout', function () {
     }
     return new Response();
 });
+
+Router::addMiddleware(
+    method: 'GET',
+    name: '/verify-auth-code/{clause}',
+    middleware: CheckForInAuth::class
+);
+Router::addMiddleware(
+    method: 'POST',
+    name: '/verify-auth-code/{clause}',
+    middleware: CheckForInAuth::class
+);
+Router::addMiddleware(
+    method: 'GET',
+    name: '/reset-password',
+    middleware: CheckForInAuth::class
+);
+Router::addMiddleware(
+    method: 'POST',
+    name: '/reset-password',
+    middleware: CheckForInAuth::class
+);

@@ -23,6 +23,7 @@ enum AuthError
     case UserAlreadyExists;
     case InvalidRegistrationToken;
     case UserNotVerified;
+    case InvalidAuthCode;
 
     /**
      * @throws \Exception
@@ -32,7 +33,6 @@ enum AuthError
         $lang ??= L::current();
 
         return match ($this) {
-            // ===== EMAIL =====
             self::InvalidEmail => match ($lang) {
                 L::NL => 'Het opgegeven e-mailadres is onjuist.',
                 L::ES => 'El correo electrónico proporcionado no es válido.',
@@ -54,8 +54,6 @@ enum AuthError
                 L::FR => "Le format de l'adresse e-mail est invalide.",
                 L::EN => 'The email format is not valid.',
             },
-
-            // ===== PASSWORD =====
             self::InvalidPassword => match ($lang) {
                 L::NL => 'Het wachtwoord voldoet niet aan de eisen.',
                 L::ES => 'La contraseña no cumple con los requisitos.',
@@ -91,8 +89,6 @@ enum AuthError
                 L::FR => 'Le mot de passe est trop faible.',
                 L::EN => 'The password is too weak.',
             },
-
-            // ===== OTHER ERRORS =====
             self::PasswordDoNotMatch => match ($lang) {
                 L::EN => 'Passwords do not match.',
                 L::NL => 'Wachtwoorden komen niet overeen.',
@@ -127,6 +123,13 @@ enum AuthError
                 L::DE => "Ihr Konto ist noch nicht verifiziert. Überprüfen Sie Ihr E-Mail-Postfach auf einen Verifizierungslink.",
                 L::ES => "Su cuenta aún no está verificada, revise su correo electrónico para obtener un enlace de verificación.",
                 L::FR => "Votre compte n'est pas encore vérifié, vérifiez votre e-mail pour un lien de vérification.",
+            },
+            self::InvalidAuthCode => match ($lang) {
+                L::NL => "De opgegeven authenticatiecode is ongeldig.",
+                L::EN => "The provided authentication code is invalid.",
+                L::DE => "Der angegebene Authentifizierungscode ist ungültig.",
+                L::ES => "El código de autenticación proporcionado no es válido.",
+                L::FR => "Le code d'authentification fourni est invalide.",
             },
         };
     }

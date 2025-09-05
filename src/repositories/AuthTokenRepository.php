@@ -3,6 +3,7 @@
 namespace Src\repositories;
 
 use Doctrine\ORM\EntityRepository;
+use OTPHP\TOTP;
 use Src\entities\AuthTokens;
 use Src\entities\User;
 

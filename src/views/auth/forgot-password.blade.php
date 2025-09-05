@@ -7,14 +7,14 @@
     <div class="container">
         <form class="auth-form" hx-post="/forgot-password-send" hx-target="#response">
             <div class="title">{{ AuthTitle::ForgetPasswordTitle->translate() }}</div>
-            <div class="response"></div>
+            <div id="response"></div>
             <div class="inputs">
                 <input type="email" name="email" value="{{ $email }}"
                        placeholder="{{ AuthInput::Email->translate() }}">
                 <input type="hidden" name="csrf_token" value="{{ Session::get('csrf_token') }}">
             </div>
             <div class="bottom">
-                <button type="submit">{{ AuthButton::ForgetPasswordButton->translate() }}</button>
+                <button type="submit">{{ AuthButton::SendButton->translate() }}</button>
                 <div class="links">
                     {!! AuthLink::Login->translate() !!}
                 </div>

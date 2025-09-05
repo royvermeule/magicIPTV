@@ -64,21 +64,12 @@ final class AuthController implements IController
     }
 
     /**
-     * @throws DateMalformedStringException
-     * @throws OptimisticLockException
-     * @throws RandomException
-     * @throws ORMException
      * @throws \Exception
      */
-    public function register(Request $request): Response
+    private function validateEmail(string $email): ?Response
     {
-        $email = (string) $request->request->get('email');
-        $password = (string) $request->request->get('password');
-        $passwordConfirmation = (string) $request->request->get('password_confirmation');
-
         /** @var array<string, Validator> $userValidator */
         $userValidator = Config::getValidator('user-validator');
-
         try {
             $userValidator['email']->assert($email);
         } catch (NestedValidationException $e) {
@@ -92,6 +83,18 @@ final class AuthController implements IController
             return new Response(content: AuthError::InvalidEmail->translate());
         }
 
+        return null;
+    }
+
+    /**
+     * @param string $password
+     * @return ?Response
+     * @throws \Exception
+     */
+    private function validatePassword(string $password): ?Response
+    {
+        /** @var array<string, Validator> $userValidator */
+        $userValidator = Config::getValidator('user-validator');
         try {
             $userValidator['password']->assert($password);
         } catch (NestedValidationException $e) {
@@ -115,6 +118,31 @@ final class AuthController implements IController
             }
 
             return new Response(content: AuthError::InvalidPassword->translate());
+        }
+
+        return null;
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     * @throws OptimisticLockException
+     * @throws RandomException
+     * @throws ORMException
+     * @throws \Exception
+     */
+    public function register(Request $request): Response
+    {
+        $email = strtolower((string) $request->request->get('email'));
+        $password = (string) $request->request->get('password');
+        $passwordConfirmation = (string) $request->request->get('password_confirmation');
+
+        $validatedEmail = $this->validateEmail($email);
+        if ($validatedEmail !== null) {
+            return $validatedEmail;
+        }
+        $validatedPwd = $this->validatePassword($password);
+        if ($validatedPwd !== null) {
+            return $validatedPwd;
         }
 
         if ($password !== $passwordConfirmation) {
@@ -190,28 +218,16 @@ final class AuthController implements IController
      */
     private function sendVerificationEmail(RegistrationTokens $registrationToken, string $email): void
     {
-        $mail = new PHPMailer();
-
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'roywilliamvermeulen@gmail.com';
-        $mail->Password = (string) Config::getFromLocalConfig('GMAIL_APP_PASSWORD');
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-
-        $mail->setFrom('roywilliamvermeulen@gmail.com', 'Roy Vermeulen');
-        $mail->addAddress($email);
-
         $token = $registrationToken->getToken();
         $baseUrl = (string) Config::getFromLocalConfig('BASE_URL');
 
-        $mail->Subject = AuthEmail::VerificationEmailSubject->translate();
-        $mail->isHTML();
-        $mail->Body = AuthEmail::VerificationEmailBody->translate(
+        $this->mail->addAddress($email);
+        $this->mail->Subject = AuthEmail::VerificationEmailSubject->translate();
+        $this->mail->isHTML();
+        $this->mail->Body = AuthEmail::VerificationEmailBody->translate(
             data: ['link' => "$baseUrl/verify-account/$token"]
         );
-        $mail->send();
+        $this->mail->send();
     }
 
     /**
@@ -276,72 +292,44 @@ final class AuthController implements IController
         $userRepo = $this->entityManager->getRepository(User::class);
         $user = $userRepo->findByEmail($email);
         if ($user === null) {
+            // say that email has been sent even when account doesn't exist.
             return new Response(
                 content: AuthMessage::AuthenticationMailSend->translate()
             );
         }
 
-        $authToken = $this->generateAuthToken($user);
-        $this->sendAuthToken($authToken, $email);
+        $code = $this->generateAuthToken($user);
+        $this->sendAuthToken($code, $email);
 
-        return new Response(
-            content: AuthMessage::AuthenticationMailSend->translate()
-        );
+        return $this->hxRedirect('/verify-auth-code/forgot-password');
     }
 
     /**
-     * @throws OptimisticLockException
-     * @throws ORMException
+     * @throws RandomException
      */
     private function generateAuthToken(User $user): string
     {
-        /** @var AuthTokenRepository $authTokenRepo */
-        $authTokenRepo = $this->entityManager->getRepository(AuthTokens::class);
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        /** @var ?User $authToken */
-        $authToken = $authTokenRepo->findByUser($user);
-        if ($authToken !== null) {
-            $this->entityManager->remove($authToken);
-            $this->entityManager->flush();
-        }
 
-        $totp = TOTP::create();
-        $secret = $totp->getSecret();
 
-        $authToken = new AuthTokens(
-            token: password_hash($secret, PASSWORD_DEFAULT),
-            user: $user,
-        );
-        $this->entityManager->persist($authToken);
-        $this->entityManager->flush();
-
-        return $authToken->getToken();
+        return $code;
     }
 
     /**
      * @throws \Exception
      */
-    private function sendAuthToken(string $token, string $email): void
+    private function sendAuthToken(string $code, string $email): void
     {
-        $mail = new PHPMailer();
+        $this->mail->addAddress($email);
+        $this->mail->Subject = AuthEmail::AuthCodeEmailSubject->translate();
+        $this->mail->isHTML();
+        $this->mail->Body = AuthEmail::AuthCodeEmailBody->translate(
+            data: ['auth_code' => $code]
+        );
+        $this->mail->send();
 
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'roywilliamvermeulen@gmail.com';
-        $mail->Password = (string) Config::getFromLocalConfig('GMAIL_APP_PASSWORD');
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-
-        $mail->setFrom('roywilliamvermeulen@gmail.com', 'Roy Vermeulen');
-        $mail->addAddress($email);
-        $mail->Subject = ;
-
-//        $mail->Subject = AuthEmail::VerificationEmailSubject->translate();
-//        $mail->isHTML();
-//        $mail->Body = AuthEmail::VerificationEmailBody->translate(
-//            data: ['link' => "$baseUrl/verify-account/$token"]
-//        );
-//        $mail->send();
+        // Shortly store email and public code for the auth process
+        Session::set('in_auth', [$email, $code]);
     }
 }

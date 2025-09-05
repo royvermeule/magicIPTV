@@ -4,26 +4,19 @@ declare(strict_types=1);
 
 namespace Src\core\http;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use eftec\bladeone\BladeOne;
+use PHPMailer\PHPMailer\PHPMailer;
 use Src\core\Config;
 use Src\core\Session;
-use Src\language\errors\AuthError;
-use Src\language\Language;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Twig\Environment;
-use Twig\Error\LoaderError;
-use Twig\Error\RuntimeError;
-use Twig\Error\SyntaxError;
-use Twig\Extension\EscaperExtension;
-use Twig\Loader\FilesystemLoader;
-use Twig\TwigFunction;
 
 trait IsController
 {
     private EntityManagerInterface $entityManager;
+
+    private PHPMailer $mail;
 
     /**
      * @throws \Exception
@@ -31,6 +24,17 @@ trait IsController
     public function __construct()
     {
         $this->entityManager = Config::getEntityManager();
+        $this->mail = new PHPMailer(true);
+
+        $this->mail->isSMTP();
+        $this->mail->Host = 'smtp.gmail.com';
+        $this->mail->SMTPAuth = true;
+        $this->mail->Username = Config::getFromLocalConfig('GMAIL_EMAIL');
+        $this->mail->Password = (string) Config::getFromLocalConfig('GMAIL_APP_PASSWORD');
+        $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $this->mail->Port = 587;
+
+        $this->mail->setFrom(Config::getFromLocalConfig('GMAIL_EMAIL'), 'MagicIPTV');
     }
 
     private function json(
@@ -67,7 +71,8 @@ trait IsController
         $blade = new BladeOne($views, $cache, BladeOne::MODE_AUTO);
 
         $standardParams = [
-            'csrf_token' => Session::get('csrf_token')
+            'csrf_token' => Session::get('csrf_token'),
+            'request' => Request::createFromGlobals()
         ];
         $params = array_merge($standardParams, $params);
 
