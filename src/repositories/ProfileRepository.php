@@ -18,6 +18,6 @@ final class ProfileRepository extends EntityRepository
 
     public function findProfileByM3uLink(string $m3uLink): ?Profiles
     {
-        return $this->findOneBy(['m3u_link', $m3uLink]);
+        return $this->findOneBy(['m3u_link' => $m3uLink]);
     }
 }

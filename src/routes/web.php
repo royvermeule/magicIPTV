@@ -19,10 +19,11 @@ use Symfony\Component\HttpFoundation\Response;
 Router::get('/', [Controller::class, 'index']);
 Router::get('/home', [Controller::class, 'home']);
 
+Router::post('/add-profile', [ProfileController::class, 'addProfile']);
+
 
 // ---- assets ----//
 Router::get('/get-profiles', [ProfileController::class, 'getProfiles']);
-
 
 
 // ---- auth ---- //

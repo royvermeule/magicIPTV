@@ -48,7 +48,7 @@ final class ProfileController implements IController
         try {
             $profileValidator['name']->assert($name);
         } catch (NestedValidationException $e) {
-
+            return new Response;
         }
         return null;
     }
@@ -62,7 +62,7 @@ final class ProfileController implements IController
         try {
             $profileValidator['pass_key']->assert($passKey);
         } catch (NestedValidationException $e) {
-
+            return new Response;
         }
         return null;
     }
