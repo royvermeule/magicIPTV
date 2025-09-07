@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Src\entities;
 
 use Doctrine\ORM\Mapping as ORM;
-#[ORM\Entity]
+use Src\repositories\ProfileRepository;
+
+#[ORM\Entity(repositoryClass: ProfileRepository::class)]
 class Profiles
 {
     #[ORM\Id]
@@ -20,8 +22,11 @@ class Profiles
     #[ORM\Column(type: 'string', length: 255)]
     private string $name;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $pass_key;
+
     #[ORM\Column(type: 'string', length: 255)]
-    private ?string $pass_key = null;
+    private string $m3u_link;
 
     #[ORM\Column(type: 'datetime', length: 255)]
     private \DateTime $created_at;
@@ -29,10 +34,12 @@ class Profiles
     #[ORM\Column(type: 'datetime', length: 255, nullable: true)]
     private ?\DateTime $updated_at = null;
 
-    public function __construct(string $name, ?string $pass_key = null)
+    public function __construct(User $user, string $name, string $m3uLink, ?string $passKey = null)
     {
+        $this->user = $user;
         $this->name = $name;
-        $this->pass_key = $pass_key;
+        $this->pass_key = $passKey;
+        $this->m3u_link = $m3uLink;
         $this->created_at = new \DateTime();
     }
 
@@ -64,6 +71,21 @@ class Profiles
     public function setPassKey(?string $pass_key): void
     {
         $this->pass_key = $pass_key;
+    }
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    public function setM3uLink(string $m3uLink): void
+    {
+        $this->m3u_link = $m3uLink;
+    }
+
+    public function getM3uLink(): string
+    {
+        return $this->m3u_link;
     }
 
     public function getCreatedAt(): \DateTime

@@ -3,7 +3,9 @@
 <?php $this->startSection('title', 'Home'); ?>
 
 <?php $this->startSection('content'); ?>
- <h1>Welcome Home</h1>
+ <div class="container">
+ <div hx-get="/get-profiles" hx-swap="outerHTML" hx-trigger="load"></div>
+ </div>
 <?php $this->stopSection(); ?>
 
 <?php if (isset($_shouldextend[1])) { echo $this->runChild('base'); } ?>

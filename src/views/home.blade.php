@@ -3,5 +3,7 @@
 @section('title', 'Home')
 
 @section('content')
-    <h1>Welcome Home</h1>
+    <div class="container">
+        <div hx-get="/get-profiles" hx-swap="outerHTML" hx-trigger="load"></div>
+    </div>
 @endsection

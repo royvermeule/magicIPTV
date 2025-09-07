@@ -64,21 +64,12 @@ final class AuthController implements IController
     }
 
     /**
-     * @throws DateMalformedStringException
-     * @throws OptimisticLockException
-     * @throws RandomException
-     * @throws ORMException
      * @throws \Exception
      */
-    public function register(Request $request): Response
+    private function validateEmail(string $email): ?Response
     {
-        $email = strtolower((string) $request->request->get('email'));
-        $password = (string) $request->request->get('password');
-        $passwordConfirmation = (string) $request->request->get('password_confirmation');
-
         /** @var array<string, Validator> $userValidator */
         $userValidator = Config::getValidator('user-validator');
-
         try {
             $userValidator['email']->assert($email);
         } catch (NestedValidationException $e) {
@@ -92,6 +83,18 @@ final class AuthController implements IController
             return new Response(content: AuthError::InvalidEmail->translate());
         }
 
+        return null;
+    }
+
+    /**
+     * @param string $password
+     * @return ?Response
+     * @throws \Exception
+     */
+    private function validatePassword(string $password): ?Response
+    {
+        /** @var array<string, Validator> $userValidator */
+        $userValidator = Config::getValidator('user-validator');
         try {
             $userValidator['password']->assert($password);
         } catch (NestedValidationException $e) {
@@ -115,6 +118,31 @@ final class AuthController implements IController
             }
 
             return new Response(content: AuthError::InvalidPassword->translate());
+        }
+
+        return null;
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     * @throws OptimisticLockException
+     * @throws RandomException
+     * @throws ORMException
+     * @throws \Exception
+     */
+    public function register(Request $request): Response
+    {
+        $email = strtolower((string) $request->request->get('email'));
+        $password = (string) $request->request->get('password');
+        $passwordConfirmation = (string) $request->request->get('password_confirmation');
+
+        $validatedEmail = $this->validateEmail($email);
+        if ($validatedEmail !== null) {
+            return $validatedEmail;
+        }
+        $validatedPwd = $this->validatePassword($password);
+        if ($validatedPwd !== null) {
+            return $validatedPwd;
         }
 
         if ($password !== $passwordConfirmation) {
@@ -242,13 +270,11 @@ final class AuthController implements IController
         /** @var ?string $email */
         $email = Session::get('forgot_pwd_email') ?? '';
 
-        $post = $request->isMethod('POST');
-        if ($post) {
+        if ($request->isMethod('POST')) {
             $email = (string) $request->request->get('email');
             Session::set('forgot_pwd_email', $email);
             return $this->hxRedirect('/forgot-password');
         }
-        Session::unset('forgot_pwd_email');
         return $this->view('auth.forgot-password', ['email' => (string) $email]);
     }
 
@@ -264,77 +290,116 @@ final class AuthController implements IController
         $userRepo = $this->entityManager->getRepository(User::class);
         $user = $userRepo->findByEmail($email);
         if ($user === null) {
+            // say that email has been sent even when account doesn't exist.
             return new Response(
                 content: AuthMessage::AuthenticationMailSend->translate()
             );
         }
 
-        $authToken = $this->generateAuthToken($user);
-        $this->sendAuthToken($authToken, $email);
+        $code = $this->generateAuthToken($user);
+        $this->sendAuthToken($code, $email);
 
-        return new Response(
-            content: AuthMessage::AuthenticationMailSend->translate()
-        );
+        return $this->hxRedirect('/verify-auth-code/reset-password');
     }
 
     /**
-     * @throws OptimisticLockException
+     * @throws RandomException
+     * @throws DateMalformedStringException
      * @throws ORMException
      */
     private function generateAuthToken(User $user): string
     {
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
         /** @var AuthTokenRepository $authTokenRepo */
         $authTokenRepo = $this->entityManager->getRepository(AuthTokens::class);
-
-        /** @var ?User $authToken */
-        $authToken = $authTokenRepo->findByUser($user);
-        if ($authToken !== null) {
-            $this->entityManager->remove($authToken);
-            $this->entityManager->flush();
+        $existingAuthToken = $authTokenRepo->findByUser($user);
+        if (
+            $existingAuthToken !== null &&
+            $existingAuthToken->getCreatedAt() < $existingAuthToken->getExpiresAt()
+        ) {
+            return $existingAuthToken->getToken();
         }
 
-        $totp = TOTP::create();
-
-        $authToken = new AuthTokens(
-            token: $totp->getSecret(),
-            user: $user,
-        );
+        $authToken = new AuthTokens($code, $user);
         $this->entityManager->persist($authToken);
         $this->entityManager->flush();
 
-        return $totp->now();
+        return $code;
     }
 
     /**
      * @throws \Exception
      */
-    private function sendAuthToken(string $token, string $email): void
+    private function sendAuthToken(string $code, string $email): void
     {
         $this->mail->addAddress($email);
         $this->mail->Subject = AuthEmail::AuthCodeEmailSubject->translate();
         $this->mail->isHTML();
         $this->mail->Body = AuthEmail::AuthCodeEmailBody->translate(
-            data: ['auth_code' => $token]
+            data: ['auth_code' => $code]
         );
         $this->mail->send();
     }
 
-    /**
-     * @throws \Exception
-     */
-    private function verifyAuthToken(string $publicToken, User $user): bool
+    public function verifyAuthCode(Request $request, string $clause): Response
     {
-        /** @var AuthTokenRepository $authTokenRepo */
-        $authTokenRepo = $this->entityManager->getRepository(AuthTokens::class);
-        $token = $authTokenRepo->findByUser($user);
-        if ($token === null) {
-            return false;
-        }
-        $secret = $token->getToken();
-        $totp = TOTP::create($secret);
+        if ($request->isMethod('POST')) {
+            $code = (string) $request->request->get('code');
+            $email = (string) Session::get('forgot_pwd_email');
 
-        return $totp->verify($publicToken);
+            /** @var AuthTokenRepository $authTokenRepo */
+            $authTokenRepo = $this->entityManager->getRepository(AuthTokens::class);
+            $authToken = $authTokenRepo->findByToken($code);
+            if ($authToken === null) {
+                return new Response('not valid');
+            }
+
+            Session::set('in_auth', $code);
+
+            return $this->hxRedirect("/$clause");
+        }
+
+        return $this->view('auth.verify-auth-code', ['clause' => $clause]);
     }
 
+    /**
+     * @throws \Exception
+     * @throws ORMException
+     */
+    public function resetPassword(Request $request): Response
+    {
+        $code = (string) Session::get('in_auth');
 
+        /** @var AuthTokenRepository $authTokenRepo */
+        $authTokenRepo = $this->entityManager->getRepository(AuthTokens::class);
+        $authToken = $authTokenRepo->findByToken($code);
+        if ($authToken === null) {
+            return new Response(status: 401);
+        }
+
+        if ($request->isMethod('POST')) {
+            $password = $request->request->get('password');
+            $passwordConfirm = $request->request->get('password_confirmation');
+            $validatePassword = $this->validatePassword($password);
+            if ($validatePassword !== null) {
+                return $validatePassword;
+            }
+            if ($password !== $passwordConfirm) {
+                return new Response(AuthError::PasswordDoNotMatch->translate());
+            }
+
+            $user = $authToken->getUser();
+            $user->setPassword($password);
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+
+            Session::unset('forgot_pwd_email');
+            Session::unset('in_auth');
+
+            return $this->hxRedirect('/login');
+        }
+
+        return $this->view('auth.reset-password');
+    }
 }

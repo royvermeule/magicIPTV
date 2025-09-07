@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Src\language\messages;
 
+use Src\language\Language;
 use Src\language\Language as L;
 
 enum AuthMessage
@@ -12,6 +13,7 @@ enum AuthMessage
     case registrationCompleted;
     case NoAccountYet;
     case AuthenticationMailSend;
+    case PasswordChanged;
 
     /**
      * @throws \Exception
@@ -48,6 +50,13 @@ enum AuthMessage
                 L::DE => "Überprüfen Sie Ihre E-Mail auf den Code, dieser ist 60 Minuten gültig.",
                 L::ES => "Revisa tu correo electrónico para el código, es válido por 60 minutos.",
                 L::FR => "Vérifiez votre e-mail pour le code, il est valable pendant 60 minutes.",
+            },
+            self::PasswordChanged => match ($lang) {
+                L::NL => "Je wachtwoord is veranderd, ga naar <a href='/login'>inloggen</a>",
+                L::EN => "Your password has been changed, please go to <a href='/login'>login</a>.",
+                L::DE => "Ihr Passwort wurde geändert, bitte gehen Sie zu <a href='/login'>Anmelden</a>.",
+                L::ES => "Tu contraseña ha sido cambiada, por favor ve a <a href='/login'>login</a>.",
+                L::FR => "Votre mot de passe a été changé, veuillez vous rendre sur <a href='/login'>login</a>.",
             }
         };
     }

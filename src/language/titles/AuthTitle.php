@@ -11,6 +11,7 @@ enum AuthTitle
     case LoginTitle;
     case RegisterTitle;
     case ForgetPasswordTitle;
+    case VerifyAuthCodeTitle;
 
     /**
      * @throws \Exception
@@ -40,6 +41,13 @@ enum AuthTitle
                 L::DE => "Passwort vergessen",
                 L::ES => "¿Olvidaste tu contraseña?",
                 L::FR => "Mot de passe oublié",
+            },
+            self::VerifyAuthCodeTitle => match ($lang) {
+                L::NL => "Authenticatiecode invoeren",
+                L::EN => "Enter authentication code",
+                L::DE => "Authentifizierungscode eingeben",
+                L::ES => "Introduce el código de autenticación",
+                L::FR => "Saisir le code d'authentification",
             },
         };
     }

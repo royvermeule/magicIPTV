@@ -1,0 +1,13 @@
+@import url(./profile.css);
+@import url(./add-profile.css);
+
+.profiles {
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
+    background-color: var(--bg);
+    min-height: 80%;
+    width: 70%;
+    border-radius: 15px;
+    padding: 1rem;
+}

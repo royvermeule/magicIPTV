@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+@import url(./auth/index.css);
+@import url(./profiles/index.css);
+
+:root {
+    --bg-dark: #0a0a0a;
+    --bg: #141414;
+    --bg-light: #323232;
+    --text: #c0c0c0;
+    --text-muted: #717171;
+    --highlight: #6c5757;
+    --border: #382d2d;
+    --border-muted: #211c1c;
+    --primary: #c20000;
+    --secondary: #e6e6e6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    color: var(--text);
+    font-family: "Open Sans", sans-serif;
+    font-size: 16px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+input {
+    border: none;
+    background-color: var(--bg-light);
+    padding: 5px;
+    outline: none;
+    height: 1.5rem;
+}
+
+.main-button {
+    border: none;
+    background-color: var(--primary);
+    padding: 5px;
+    height: 2rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+a {
+    color: var(--primary);
+}
+
+body {
+    background: var(--bg-dark);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.popup {
+    border-radius: 10px;
+    max-width: 400px;
+    width: 90%;
+}

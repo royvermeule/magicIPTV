@@ -1,0 +1,81 @@
+@php
+    use Src\core\Session;use Src\entities\Profiles;use Src\language\buttons\CommonButton;use Src\language\forms\inputs\ProfileInput;use Src\language\information\ProfileInfo;
+@endphp
+
+<div hidden class="popup-container add-profile">
+    <form class="popup popup-form" hx-post="/add-profile" hx-target="#response">
+        <div class="title">{{ ProfileInfo::NewProfile->translate() }}</div>
+        <div id="response"></div>
+        <input type="text" name="name" placeholder="{{ ProfileInput::ProfileName->translate() }}">
+        <input type="text" name="m3u_link" placeholder="{{ ProfileInput::M3ULink->translate() }}">
+        <input type="password" name="pass_key" placeholder="{{ ProfileInput::Passkey->translate() }}">
+        <input type="hidden" name="csrf_token" value="{{ Session::get('csrf_token') }}">
+        <button class="main-button" type="submit">{{ CommonButton::AddButton->translate() }}</button>
+    </form>
+</div>
+
+<section class="profiles">
+    <div class="open-add-profile-wrapper">
+        <button class="open-add-profile">
+            <svg width="30" height="30" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 12.8333V1.16667" stroke="#C0C0C0" stroke-width="1.66667" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+                <path d="M1.16667 7H12.8333" stroke="#C0C0C0" stroke-width="1.66667" stroke-linecap="round"
+                      stroke-linejoin="round"/>
+            </svg>
+        </button>
+        {{ ProfileInfo::NewProfile->translate() }}
+    </div>
+
+    @php /** @var Profiles[] $profiles */ @endphp
+    @foreach($profiles as $profile)
+        <div id="profile-{{ $profile->getId() }}" class="profile">
+            <div class="info">
+                {{ $profile->getName() }}
+            </div>
+
+            <nav class="menu" style="display: none;">
+                <ul>
+                    <li>
+                        <button>Delete</button>
+                    </li>
+                    <li>
+                        <button>Edit</button>
+                    </li>
+                    <li>
+                        <button>Set passkey</button>
+                    </li>
+                    <li>
+                        <button>Open</button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    @endforeach
+</section>
+<script>
+    const addProfile = document.querySelector('.add-profile');
+    const openAddProfile = document.querySelector('.open-add-profile');
+    const form = addProfile.querySelector('form');
+
+    const toggleAddProfile = () => {
+        addProfile.hidden = !addProfile.hidden;
+    };
+
+    openAddProfile.addEventListener('click', () => {
+        toggleAddProfile();
+    });
+
+    addProfile.addEventListener('click', (event) => {
+        if (!form.contains(event.target)) {
+            toggleAddProfile();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            addProfile.hidden = true;
+        }
+    });
+
+</script>

@@ -9,33 +9,23 @@ use Src\core\http\routing\Router;
 use Src\core\Session;
 use Src\entities\RegistrationTokens;
 use Src\language\errors\AuthError;
+use Src\middleware\CheckForInAuth;
+use Src\middleware\WhenLoggedIn;
+use Src\middleware\WhenNotLoggedIn;
 use Src\repositories\RegistrationTokenRepository;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 Router::addMiddleware('GET', '/', function () {
-    if (!Session::has('user_id')) {
-        return new RedirectResponse('/login');
-    } else {
-        return new RedirectResponse('/home');
-    }
-});
-Router::addMiddleware('GET', '/home', function () {
-    if (!Session::has('user_id')) {
-        return new RedirectResponse('/login');
-    }
-
-    return new Response();
-});
-
-Router::addMiddleware('GET', '/login', function () {
     if (Session::has('user_id')) {
         return new RedirectResponse('/home');
     }
-
-    return new Response();
+    return new Response;
 });
+Router::addMiddleware('GET', '/home', WhenNotLoggedIn::class);
+
+Router::addMiddleware('GET', '/login', WhenLoggedIn::class);
 Router::addMiddleware('POST', '/login', function () {
     if (Session::has('user_id')) {
         return new Response(
@@ -67,9 +57,27 @@ Router::addMiddleware(
         return new Response();
     });
 
-Router::addMiddleware('GET', '/logout', function () {
-    if (!Session::has('user_id')) {
-        return new RedirectResponse('/login');
-    }
-    return new Response();
-});
+Router::addMiddleware('GET', '/logout', WhenNotLoggedIn::class);
+
+Router::addMiddleware(
+    method: 'GET',
+    name: '/reset-password',
+    middleware: CheckForInAuth::class
+);
+Router::addMiddleware(
+    method: 'POST',
+    name: '/reset-password',
+    middleware: CheckForInAuth::class
+);
+Router::addMiddleware(
+    method: 'GET',
+    name: '/reset-password',
+    middleware: WhenLoggedIn::class
+);
+Router::addMiddleware(
+    method: 'POST',
+    name: '/reset-password',
+    middleware: WhenLoggedIn::class
+);
+
+Router::addMiddleware('GET', '/get-profiles', WhenNotLoggedIn::class);

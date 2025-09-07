@@ -9,6 +9,7 @@ use eftec\bladeone\BladeOne;
 use PHPMailer\PHPMailer\PHPMailer;
 use Src\core\Config;
 use Src\core\Session;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 trait IsController
@@ -70,7 +71,8 @@ trait IsController
         $blade = new BladeOne($views, $cache, BladeOne::MODE_AUTO);
 
         $standardParams = [
-            'csrf_token' => Session::get('csrf_token')
+            'csrf_token' => Session::get('csrf_token'),
+            'request' => Request::createFromGlobals()
         ];
         $params = array_merge($standardParams, $params);
 

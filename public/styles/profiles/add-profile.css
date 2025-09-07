@@ -1,0 +1,32 @@
+.open-add-profile {
+    height: 5rem;
+    width: 5rem;
+    background-color: var(--primary);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.open-add-profile-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.add-profile form {
+    background-color: var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem
+}
+
+.add-profile form .title {
+    font-size: 20px;
+    text-align: center;
+}
+
+.add-profile form #response {
+    min-height: 1.5rem;
+    color: var(--primary);
+}

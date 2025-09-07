@@ -2,16 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Src\language\forms\buttons;
+namespace Src\language\buttons;
 
 use Src\language\Language as L;
 
-enum AuthButton
+enum CommonButton
 {
     case LoginButton;
     case RegisterButton;
     case ForgetPasswordButton;
     case SendButton;
+    case AddButton;
 
     /**
      * @throws \Exception
@@ -47,6 +48,13 @@ enum AuthButton
                 L::DE => 'Senden',
                 L::ES => 'Enviar',
                 L::FR => 'Envoyer',
+            },
+            self::AddButton => match ($lang) {
+                L::NL => 'Toevoegen',
+                L::EN => 'Add',
+                L::DE => 'Hinzufügen',
+                L::ES => 'Agregar',
+                L::FR => 'Ajouter',
             },
         };
     }
